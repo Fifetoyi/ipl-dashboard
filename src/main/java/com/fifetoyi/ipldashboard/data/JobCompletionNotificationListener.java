@@ -1,5 +1,12 @@
 package com.fifetoyi.ipldashboard.data;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.persistence.EntityManager;
+
+import com.fifetoyi.ipldashboard.model.Team;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -14,21 +21,34 @@ public class JobCompletionNotificationListener extends JobExecutionListenerSuppo
 
   private static final Logger log = LoggerFactory.getLogger(JobCompletionNotificationListener.class);
 
-  private final JdbcTemplate jdbcTemplate;
+  private final EntityManager em;
 
   @Autowired
-  public JobCompletionNotificationListener(JdbcTemplate jdbcTemplate) {
-    this.jdbcTemplate = jdbcTemplate;
+  public JobCompletionNotificationListener(EntityManager em) {
+    this.em = em;
   }
 
   @Override
   public void afterJob(JobExecution jobExecution) {
-    if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
+    if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
       log.info("!!! JOB FINISHED! Time to verify the results");
+      
+      Map<String, Team> teamData = new HashMap<>();
 
-      jdbcTemplate.query("SELECT team1, team2, date FROM match",
-        (rs, row) -> "Team 1 " + rs.getString(1) + " Team 2 " + rs.getString(2) + " Date " + rs.getString(3)
-      ).forEach(str -> System.out.println(str));
+      em.createQuery("select distinct m.team1, count(*) from Match m group by m.team1", Object[].class)
+        .getResultList()
+        .stream()
+        .map(e -> new Team((String) e[0], (long) e[1]))
+        .forEach(team -> teamData.put(team.getTeamName(), team));
+      
+      em.createQuery("select distinct m.team1, count(*) from Match m group by m.team1", Object[].class)
+        .getResultList()
+        .stream()
+        .forEach(e -> {
+            Team team = teamData.get((String) e[0]);
+            team.setTotalMatches(team.getTotalMatches() + (long) e[1]);
+        });
+
     }
   }
 }
