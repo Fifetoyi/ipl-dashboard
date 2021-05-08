@@ -4,14 +4,11 @@ import java.time.LocalDate;
 
 import com.fifetoyi.ipldashboard.model.Match;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.springframework.batch.item.ItemProcessor;
 
 public class MatchDataProcessor implements ItemProcessor<MatchInput, Match> {
 
-    private static final Logger log = LoggerFactory.getLogger(MatchDataProcessor.class);
+    // private static final Logger log = LoggerFactory.getLogger(MatchDataProcessor.class);
 
     @Override
     public Match process(final MatchInput matchInput) throws Exception {
@@ -39,6 +36,7 @@ public class MatchDataProcessor implements ItemProcessor<MatchInput, Match> {
 
         match.setTossWinner(matchInput.getToss_winner());
         match.setTossDecision(matchInput.getToss_decision());
+        match.setMatchWinner(matchInput.getWinner());
         match.setResult(matchInput.getResult());
         match.setResultMargin(matchInput.getResult_margin());
         match.setUmpire1(matchInput.getUmpire1());
